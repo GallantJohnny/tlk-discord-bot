@@ -4,7 +4,6 @@ from bot import embeds
 
 @logger.catch
 def help_commands(bot):
-    pass
 
     @bot.group(invoke_without_command=True)
     async def help(ctx):

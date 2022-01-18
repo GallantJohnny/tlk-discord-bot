@@ -24,13 +24,26 @@ import discord
     # return embed
 
 @logger.catch
+def help_admin():
+    embed = discord.Embed(title="Help Admin", color=0x117de1)
+    embed.description = "Help for admin-only commands."
+    embed.add_field(name="Commands",
+                    value='''```!whitelist @user => Give whitelist spot to \
+@user\n!whitelist-multi @user1 @user2... => Give whitelist spot to multiple \
+users.\n!whitelist-address => Whitelist addresses directly (DM only).\n \
+!show-whitelist => Get file with list of all whitelisted addresses.```''',
+                    inline=False)
+
+    return embed
+
+@logger.catch
 def help():
     embed = discord.Embed(title="Help", color=0x117de1)
     embed.description = "TLK Bot has everything for your daily needs."
     embed.add_field(name="Commands",
-                    value='''Here is a list of all the commands available:
-```!check-whitelist => check if you are whitelisted\n!verify => verify your \
-wallet for the whitelist (you need to be whitelisted first!)```''', inline=False)
+                    value='''This is all you need to know:
+```!check-whitelist => check if you are whitelisted (DM only)```''',
+                    inline=False)
 
     return embed
 
@@ -91,21 +104,60 @@ def help_tokens():
 
 @logger.catch
 def whitelist_successful(receiver):
-    embed = discord.Embed(title="You got a whitelist spot!", color=0xFFD700)
-    embed.description = f'''Congratulations {receiver.mention}, you got a \
-whitelist spot!'''
-    embed.add_field(name="Next steps", value='''Check your DMs! You should \
-have received a message from me to verify your wallet address.''', inline=False)
+    embed = discord.Embed(title="You are one step away from the whitelist!",
+                          color=0xFFD700)
+    # embed.description = f'''Congratulations {receiver.mention}, you got a \
+# whitelist spot!'''
+    embed.description = f"""{receiver.mention} you are one step away from the \
+whitelist, congratulations!"""
+    embed.add_field(name="Next steps", value="""In order to participate in the \
+whitelist you need to provide an address. Text me: `!verify` by DM to start the \
+verification process.""", inline=False)
 
     return embed
 
 @logger.catch
 def whitelist_verify_prompt():
     embed = discord.Embed(title="Verification needed!", color=0xf28804)
-    embed.description = f'''**You just received a spot on the whitelist, \
+    embed.description = f'''**You are one step away from the whitelist, \
 congratulations**!\nIn order to participate in the whitelist you need to \
 provide an address. Run `!verify` to start the process.'''
 
+    return embed
+
+###
+# whitelist-address
+###
+
+@logger.catch
+def wl_address_prompt():
+    embed = discord.Embed(color=0xf28804)
+    embed.description = """Enter the address you want to add to the whitelist.\n \
+Type `done` to finish."""
+    return embed
+
+@logger.catch
+def wl_address_ok_prompt(wl_addresses):
+    embed = discord.Embed(title="WL addresses confirmation", color=0xf28804)
+    embed.description = f'''You are about to add {len(wl_addresses)} new \
+addresses to the whitelist. Please make sure everything is correct. This cannot \
+be reversed.'''
+    embed.add_field(name="Addresses", value=f"{chr(10).join(wl_addresses)}",
+            inline=False)
+    embed.set_footer(text="Reply with yes to confirm or no to cancel")
+
+    return embed
+
+def wl_address_success():
+    embed = discord.Embed(title="Success!", color=0x00e500)
+    embed.description = "WL addresses added succesfully."
+
+    return embed
+
+@logger.catch
+def wl_address_cancelled():
+    embed = discord.Embed(title="Cancelled!", color=0x9a9b9c)
+    embed.description = "Nothing was changed."
     return embed
 
 ###
@@ -177,16 +229,17 @@ def wallet_address_prompt():
 def address_in_whitelist(address):
     embed = discord.Embed(title="You are good to go!", color=0x00e500)
     embed.description = """You are already verified with an address for the \
-whitelist . If you want to change it type `!verify`"""
+whitelist."""
     embed.add_field(name="Verified Address", value=f"**{address}**")
     return embed
 
 @logger.catch
 def address_verification_needed():
     embed = discord.Embed(title="Verification needed!", color=0xf28804)
-    embed.description = f'''**You are on the whitelist, congratulations**!\n \
-But you still need to verify your address in order to participate in the \
-whitelist. Type `!verify` to start the verification process.'''
+    embed.description = f'''**You are one step away from  the whitelist, \
+congratulations**!\nThe only thing left is to verify your address in order to \
+participate in the whitelist. Type `!verify` to start the verification \
+process.'''
 
     return embed
 

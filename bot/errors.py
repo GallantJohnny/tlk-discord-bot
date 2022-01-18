@@ -24,9 +24,21 @@ this error persists please contact **@0xKalakaua**.'''
 def handle_dm_only(error):
     embed = discord.Embed(title="Command Error", color=0xE50000)
     if isinstance(error, commands.PrivateMessageOnly):
-        embed.description = "This command can only be used in DM."
+        embed.description = """This command can only be used in DM. Please \
+send me a direct message."""
     else:
         embed.description = "Unknown error occurred. Try again."
+
+    return embed
+
+@logger.catch
+def handle_admin_only(error):
+    embed = discord.Embed(title="Command Error", color=0xE50000)
+    if isinstance(error, commands.CheckFailure):
+        embed.description = "Only admins can run this command."
+    else:
+        embed.description = '''An unknown error occurred. Please try again. If \
+this error persists please contact **@0xKalakaua**.'''
 
     return embed
 
@@ -55,9 +67,51 @@ this error persists please contact **@0xKalakaua**.'''
     return embed
 
 @logger.catch
-def handle_not_in_whitelist():
+def handle_already_on_whitelist(receiver):
+    embed = discord.Embed(title="User already on the whitelist", color=0xE50000)
+    embed.description = f"{receiver.mention} is already on the whitelist."
+    return embed
+
+@logger.catch
+def handle_not_on_whitelist():
     embed = discord.Embed(title="Not on whitelist", color=0xE50000)
     embed.description = "You are not on the whitelist."
+    return embed
+
+@logger.catch
+def handle_nothing_to_do():
+    embed = discord.Embed(color=0xE50000)
+    embed.description = "Nothing to do"
+    return embed
+
+###
+# whitelist-address
+###
+
+@logger.catch
+def handle_whitelist_address(error):
+    embed = discord.Embed(title="Command Error", color=0xE50000)
+    if isinstance(error, commands.PrivateMessageOnly):
+        embed.description = """This command can only be used in DM. Please \
+send me a direct message."""
+    elif isinstance(error, commands.CheckFailure):
+        embed.description = "Only admins can run this command."
+    else:
+        embed.description = '''An unknown error occurred. Please try again. If \
+this error persists please contact **@0xKalakaua**.'''
+
+    return embed
+
+@logger.catch
+def handle_invalid_wl_address():
+    embed = discord.Embed(title="Invalid Address", color=0xE50000)
+    embed.description = "Skipping it..."
+    return embed
+
+@logger.catch
+def handle_empty_wl_address():
+    embed = discord.Embed(title="No addresses provided", color=0xE50000)
+    embed.description = "No address was provided so nothing was changed."
     return embed
 
 ###
@@ -78,7 +132,8 @@ def verification_timeout():
 def handle_show_whitelist(error):
     embed = discord.Embed(title="Command Error", color=0xE50000)
     if isinstance(error, commands.PrivateMessageOnly):
-        embed.description = "This command can only be used in DM."
+        embed.description = """This command can only be used in DM. Please \
+send me a direct message."""
     elif isinstance(error, commands.CheckFailure):
         embed.description = "Only admins can run this command."
     else:
@@ -98,7 +153,8 @@ See `$tokens` for a list of supported tokens'''
 def handle_deposit(error):
     embed = discord.Embed(title="Command Error", color=0xE50000)
     if isinstance(error, commands.PrivateMessageOnly):
-        embed.description = "This command can only be used in DM."
+        embed.description = """This command can only be used in DM. Please \
+send me a direct message."""
     else:
         embed.description = "Unknown error occurred. Try again."
 
@@ -166,7 +222,8 @@ def handle_withdrawal(error):
         embed.description = '''You need to include a token code (FTM, TOMB, \
 etc.)\n\ne.g. `$withdraw FTM`'''
     elif isinstance(error, commands.PrivateMessageOnly):
-        embed.description = "This command can only be used in DM."
+        embed.description = """This command can only be used in DM. Please \
+send me a direct message."""
     else:
         embed.description = "Unknown error occurred. Try again."
 
