@@ -24,13 +24,26 @@ import discord
     # return embed
 
 @logger.catch
+def help_admin():
+    embed = discord.Embed(title="Help Admin", color=0x117de1)
+    embed.description = "Help for admin-only commands."
+    embed.add_field(name="Commands",
+                    value='''```!whitelist @user => Give whitelist spot to \
+@user\n!whitelist-multi @user1 @user2... => Give whitelist spot to multiple \
+users.\n!whitelist-address => Whitelist addresses directly (DM only).\n \
+!show-whitelist => Get file with list of all whitelisted addresses.```''',
+                    inline=False)
+
+    return embed
+
+@logger.catch
 def help():
     embed = discord.Embed(title="Help", color=0x117de1)
     embed.description = "TLK Bot has everything for your daily needs."
     embed.add_field(name="Commands",
-                    value='''Here is a list of all the commands available:
-```!check-whitelist => check if you are whitelisted\n!verify => verify your \
-wallet for the whitelist (you need to be whitelisted first!)```''', inline=False)
+                    value='''This is all you need to know:
+```!check-whitelist => check if you are whitelisted (DM only)```''',
+                    inline=False)
 
     return embed
 

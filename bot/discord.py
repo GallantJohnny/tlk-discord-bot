@@ -49,6 +49,13 @@ def run_discord_bot(discord_token, conn, w3):
     def is_admin(ctx):
         return ctx.message.author.id in ADMINS
 
+
+    @bot.command(name="help-admin")
+    @commands.check(is_admin)
+    async def help_admin(ctx):
+        logger.debug("{} is executing !help-admin command.", ctx.author)
+        await ctx.send(embed=embeds.help_admin())
+
     ###
     # Tip bot commands
     ###
@@ -66,16 +73,25 @@ def run_discord_bot(discord_token, conn, w3):
         # dm_channel = await receiver.create_dm()
         # await dm_channel.send(embed=embeds.whitelist_verify_prompt())
 
-    @bot.command()
+    @bot.command(name="whitelist-multi")
     @commands.check(is_admin)
-    async def whitelist(ctx, *, receiver: discord.Member):
-        logger.debug("{} is executing !whitelist command.", ctx.author)
+    async def whitelist_multi(ctx, *args):
+        logger.debug("{} is executing !whitelist-multi command.", ctx.author)
         wl_role = get(ctx.guild.roles, id=int(config["WHITELIST_ROLE_ID"]))
         logger.debug("Whitelist role: {}", wl_role)
-        if wl_role in receiver.roles:
-            return await ctx.send(embed=errors.handle_already_on_whitelist(receiver))
-        await receiver.add_roles(wl_role)
-        await ctx.send(embed=embeds.whitelist_successful(receiver))
+        for x in args:
+            try:
+                receiver_id = int(x.strip("<@!>"))
+            except ValueError:
+                receiver_id = -1
+            receiver = ctx.guild.get_member(receiver_id)
+            if not receiver:
+                continue
+            if wl_role in receiver.roles:
+                await ctx.send(embed=errors.handle_already_on_whitelist(receiver))
+            else:
+                await receiver.add_roles(wl_role)
+                await ctx.send(embed=embeds.whitelist_successful(receiver))
         # dm_channel = await receiver.create_dm()
         # await dm_channel.send(embed=embeds.whitelist_verify_prompt())
 
@@ -88,7 +104,6 @@ def run_discord_bot(discord_token, conn, w3):
         def is_valid(msg):
             return msg.channel == ctx.channel and msg.author == ctx.author
 
-        address = "start"
         counter = 0
         wl_addresses = []
         while counter < 100:
@@ -318,6 +333,11 @@ def run_discord_bot(discord_token, conn, w3):
     # Command Errors
     ###
 
+    @help_admin.error
+    async def help_admin_error(ctx, error):
+        logger.error("{}: {} User: {}", type(error).__name__, error, ctx.author)
+        await ctx.send(embed=errors.handle_admin_only(error))
+
     @whitelist.error
     async def whitelist_error(ctx, error):
         try:
@@ -326,6 +346,11 @@ def run_discord_bot(discord_token, conn, w3):
             receiver = None
         logger.error("{}: {} User: {}", type(error).__name__, error, ctx.author)
         await ctx.send(embed=errors.handle_whitelist(error, receiver))
+
+    @whitelist_multi.error
+    async def whitelist_multi_error(ctx, error):
+        logger.error("{}: {} User: {}", type(error).__name__, error, ctx.author)
+        await ctx.send(embed=errors.handle_admin_only(error))
 
     @whitelist_address.error
     async def whitelist_address_error(ctx, error):

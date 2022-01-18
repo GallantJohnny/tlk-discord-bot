@@ -31,6 +31,17 @@ send me a direct message."""
 
     return embed
 
+@logger.catch
+def handle_admin_only(error):
+    embed = discord.Embed(title="Command Error", color=0xE50000)
+    if isinstance(error, commands.CheckFailure):
+        embed.description = "Only admins can run this command."
+    else:
+        embed.description = '''An unknown error occurred. Please try again. If \
+this error persists please contact **@0xKalakaua**.'''
+
+    return embed
+
 
 ###
 # whitelist
