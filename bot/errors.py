@@ -78,6 +78,20 @@ def handle_nothing_to_do():
 ###
 
 @logger.catch
+def handle_whitelist_address(error):
+    embed = discord.Embed(title="Command Error", color=0xE50000)
+    if isinstance(error, commands.PrivateMessageOnly):
+        embed.description = """This command can only be used in DM. Please \
+send me a direct message."""
+    elif isinstance(error, commands.CheckFailure):
+        embed.description = "Only admins can run this command."
+    else:
+        embed.description = '''An unknown error occurred. Please try again. If \
+this error persists please contact **@0xKalakaua**.'''
+
+    return embed
+
+@logger.catch
 def handle_invalid_wl_address():
     embed = discord.Embed(title="Invalid Address", color=0xE50000)
     embed.description = "Skipping it..."

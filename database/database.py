@@ -93,8 +93,8 @@ def add_wl_addresses_to_db(conn, wl_addresses):
     :param wl_addresses: List of addresses (str)
     """
     values = [(random.randint(1, 9999999999999999), addr) for addr in wl_addresses]
-    logger.info("Inserting {} to db.", new_entry)
-    query = '''INSERT INTO whitelist (user_id,address) VALUES(?,?)'''
+    logger.info("Inserting {} to db.", values)
+    query = '''INSERT OR IGNORE INTO whitelist (user_id,address) VALUES(?,?)'''
     cur = conn.cursor()
     cur.executemany(query, values)
     conn.commit()

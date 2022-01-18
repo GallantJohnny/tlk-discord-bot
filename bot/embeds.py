@@ -95,10 +95,10 @@ def whitelist_successful(receiver):
                           color=0xFFD700)
     # embed.description = f'''Congratulations {receiver.mention}, you got a \
 # whitelist spot!'''
-    embed.description = f"""**You are one step away from the whitelist, \
-congratulations**!"""
+    embed.description = f"""{receiver.mention} you are one step away from the \
+whitelist, congratulations!"""
     embed.add_field(name="Next steps", value="""In order to participate in the \
-whitelist you need to provide an address. Text me `!verify` by DM to start the \
+whitelist you need to provide an address. Text me: `!verify` by DM to start the \
 verification process.""", inline=False)
 
     return embed
@@ -119,17 +119,17 @@ provide an address. Run `!verify` to start the process.'''
 @logger.catch
 def wl_address_prompt():
     embed = discord.Embed(color=0xf28804)
-    embed.description = """Enter address you want to add to the whitelist.\n \
+    embed.description = """Enter the address you want to add to the whitelist.\n \
 Type `done` to finish."""
     return embed
 
 @logger.catch
-def wl_address_ok_prompt(wl_adresses):
+def wl_address_ok_prompt(wl_addresses):
     embed = discord.Embed(title="WL addresses confirmation", color=0xf28804)
-    embed.description = '''You are about to add {len(wl_address)} new \
+    embed.description = f'''You are about to add {len(wl_addresses)} new \
 addresses to the whitelist. Please make sure everything is correct. This cannot \
 be reversed.'''
-    embed.add_field(name="Addresses", value=f"{'\n'.join(wl_addresses)}",
+    embed.add_field(name="Addresses", value=f"{chr(10).join(wl_addresses)}",
             inline=False)
     embed.set_footer(text="Reply with yes to confirm or no to cancel")
 
@@ -223,9 +223,10 @@ whitelist."""
 @logger.catch
 def address_verification_needed():
     embed = discord.Embed(title="Verification needed!", color=0xf28804)
-    embed.description = f'''**You are on the whitelist, congratulations**!\n \
-But you still need to verify your address in order to participate in the \
-whitelist. Type `!verify` to start the verification process.'''
+    embed.description = f'''**You are one step away from  the whitelist, \
+congratulations**!\nThe only thing left is to verify your address in order to \
+participate in the whitelist. Type `!verify` to start the verification \
+process.'''
 
     return embed
 

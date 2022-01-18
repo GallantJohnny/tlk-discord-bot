@@ -56,9 +56,22 @@ def run_discord_bot(discord_token, conn, w3):
     @bot.command()
     @commands.check(is_admin)
     async def whitelist(ctx, *, receiver: discord.Member):
-        logger.debug("Executing !whitelist command.")
+        logger.debug("{} is executing !whitelist command.", ctx.author)
         wl_role = get(ctx.guild.roles, id=int(config["WHITELIST_ROLE_ID"]))
-        logger.debug("Whitelist role {}", wl_role)
+        logger.debug("Whitelist role: {}", wl_role)
+        if wl_role in receiver.roles:
+            return await ctx.send(embed=errors.handle_already_on_whitelist(receiver))
+        await receiver.add_roles(wl_role)
+        await ctx.send(embed=embeds.whitelist_successful(receiver))
+        # dm_channel = await receiver.create_dm()
+        # await dm_channel.send(embed=embeds.whitelist_verify_prompt())
+
+    @bot.command()
+    @commands.check(is_admin)
+    async def whitelist(ctx, *, receiver: discord.Member):
+        logger.debug("{} is executing !whitelist command.", ctx.author)
+        wl_role = get(ctx.guild.roles, id=int(config["WHITELIST_ROLE_ID"]))
+        logger.debug("Whitelist role: {}", wl_role)
         if wl_role in receiver.roles:
             return await ctx.send(embed=errors.handle_already_on_whitelist(receiver))
         await receiver.add_roles(wl_role)
@@ -70,7 +83,7 @@ def run_discord_bot(discord_token, conn, w3):
     @commands.check(is_admin)
     @commands.dm_only()
     async def whitelist_address(ctx):
-        logger.debug("Executing !whitelist-address command.")
+        logger.debug("{} is executing !whitelist-address command.", ctx.author)
 
         def is_valid(msg):
             return msg.channel == ctx.channel and msg.author == ctx.author
@@ -104,7 +117,7 @@ def run_discord_bot(discord_token, conn, w3):
     @bot.command()
     @commands.dm_only()
     async def verify(ctx):
-        logger.debug("Executing !verify command.")
+        logger.debug("{} is executing !verify command.", ctx.author)
         tlk_guild = bot.get_guild(int(config["GUILD_ID"]))
         wl_role = get(tlk_guild.roles, id=int(config["WHITELIST_ROLE_ID"]))
         member = tlk_guild.get_member(ctx.author.id)
@@ -144,7 +157,7 @@ def run_discord_bot(discord_token, conn, w3):
     @bot.command(name="check-whitelist")
     @commands.dm_only()
     async def check_whitelist(ctx, *, address: Optional[str]):
-        logger.debug("Executing check-whitelist command.")
+        logger.debug("{} is executing !check-whitelist command.", ctx.author)
         def is_valid(msg):
             return msg.channel == ctx.channel and msg.author == ctx.author
 
@@ -158,7 +171,7 @@ def run_discord_bot(discord_token, conn, w3):
             if not Web3.isAddress(address):
                 return await ctx.send(embed=errors.handle_invalid_address())
             if is_wl_address_in_db(conn, address):
-                return await ctx.send(embed=address_in_whitelist(address))
+                return await ctx.send(embed=embeds.address_in_whitelist(address))
             else:
                 return await ctx.send(embed=errors.handle_not_on_whitelist())
 
@@ -173,7 +186,7 @@ def run_discord_bot(discord_token, conn, w3):
     @commands.check(is_admin)
     @commands.dm_only()
     async def show_whitelist(ctx):
-        logger.debug("Executing show-whitelist command.")
+        logger.debug("{} is executing !show-whitelist command.", ctx.author)
         wl_file = get_whitelist(conn)
         await ctx.send(file=discord.File(wl_file))
 
@@ -311,22 +324,27 @@ def run_discord_bot(discord_token, conn, w3):
             receiver = ctx.kwargs["receiver"]
         except KeyError:
             receiver = None
-        logger.error("{}: {}", type(error).__name__, error)
+        logger.error("{}: {} User: {}", type(error).__name__, error, ctx.author)
         await ctx.send(embed=errors.handle_whitelist(error, receiver))
+
+    @whitelist_address.error
+    async def whitelist_address_error(ctx, error):
+        logger.error("{}: {} User: {}", type(error).__name__, error, ctx.author)
+        await ctx.send(embed=errors.handle_whitelist_address(error))
 
     @verify.error
     async def verify_error(ctx, error):
-        logger.error("{}: {}", type(error).__name__, error)
+        logger.error("{}: {} User: {}", type(error).__name__, error, ctx.author)
         await ctx.send(embed=errors.handle_dm_only(error))
 
     @check_whitelist.error
     async def check_whitelist_error(ctx, error):
-        logger.error("{}: {}", type(error).__name__, error)
+        logger.error("{}: {} User: {}", type(error).__name__, error, ctx.author)
         await ctx.send(embed=errors.handle_dm_only(error))
 
     @show_whitelist.error
     async def show_whitelist_error(ctx, error):
-        logger.error("{}: {}", type(error).__name__, error)
+        logger.error("{}: {} User: {}", type(error).__name__, error, ctx.author)
         await ctx.send(embed=errors.handle_show_whitelist(error))
 
     # @gas.error
