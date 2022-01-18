@@ -2,6 +2,7 @@ import sqlite3
 from loguru import logger
 from eth_account import Account
 import time
+import random
 from utils.encryption import decrypt_data
 
 @logger.catch
@@ -85,6 +86,20 @@ def insert_wl_address(conn, new_entry):
     conn.commit()
 
 @logger.catch
+def add_wl_addresses_to_db(conn, wl_addresses):
+    """
+    Insert multiple (null, address) to the whitelist table
+    :param conn: Connection object
+    :param wl_addresses: List of addresses (str)
+    """
+    values = [(random.randint(1, 9999999999999999), addr) for addr in wl_addresses]
+    logger.info("Inserting {} to db.", new_entry)
+    query = '''INSERT INTO whitelist (user_id,address) VALUES(?,?)'''
+    cur = conn.cursor()
+    cur.executemany(query, values)
+    conn.commit()
+
+@logger.catch
 def get_wl_address_from_db(conn, user_id):
     """
     Get a user's account from the whitelist table
@@ -100,6 +115,14 @@ def get_wl_address_from_db(conn, user_id):
     if not address:
         return None
     return address[0]
+
+@logger.catch
+def is_wl_address_in_db(conn, address):
+    logger.debug("Searching address: {} in whitelist.", address)
+    cur = conn.cursor()
+    cur.execute("SELECT address FROM whitelist")
+    addresses = cur.fetchall()
+    return address in [addr[0] for addr in addresses]
 
 @logger.catch
 def get_whitelist(conn):

@@ -7,16 +7,24 @@ from discord.ext import commands
 from discord.utils import get
 from utils.users import (get_address, get_user_balance, withdraw_to_address,
         tip_user)
-from tokens.tokens import tokens
+# from tokens.tokens import tokens
 from utils.utils import round_down, to_lower, get_min_gas
 from utils.encryption import generate_key
 from utils.fantom import verify_address
 from database.database import (get_wl_address_from_db, insert_wl_address,
-        get_whitelist)
+        get_whitelist, is_wl_address_in_db, add_wl_addresses_to_db)
 from bot import errors, embeds
 from bot.help import help_commands
 from decimal import Decimal
 from config import config
+
+ADMINS = [687754112866975841, 303336238495039501, 205188831815794688,
+        852094576784441365, 817156615840202775]
+
+# LOSER WALDO 303336238495039501
+# LOSER ROOT 205188831815794688
+# LOSER KING 852094576784441365
+# LOSER KRYPTONET 817156615840202775
 
 @logger.catch
 def run_discord_bot(discord_token, conn, w3):
@@ -39,7 +47,7 @@ def run_discord_bot(discord_token, conn, w3):
     ###
 
     def is_admin(ctx):
-        return ctx.message.author.id == 687754112866975841
+        return ctx.message.author.id in ADMINS
 
     ###
     # Tip bot commands
@@ -50,10 +58,48 @@ def run_discord_bot(discord_token, conn, w3):
     async def whitelist(ctx, *, receiver: discord.Member):
         logger.debug("Executing !whitelist command.")
         wl_role = get(ctx.guild.roles, id=int(config["WHITELIST_ROLE_ID"]))
+        logger.debug("Whitelist role {}", wl_role)
+        if wl_role in receiver.roles:
+            return await ctx.send(embed=errors.handle_already_on_whitelist(receiver))
         await receiver.add_roles(wl_role)
         await ctx.send(embed=embeds.whitelist_successful(receiver))
-        dm_channel = await receiver.create_dm()
-        await dm_channel.send(embed=embeds.whitelist_verify_prompt())
+        # dm_channel = await receiver.create_dm()
+        # await dm_channel.send(embed=embeds.whitelist_verify_prompt())
+
+    @bot.command(name="whitelist-address")
+    @commands.check(is_admin)
+    @commands.dm_only()
+    async def whitelist_address(ctx):
+        logger.debug("Executing !whitelist-address command.")
+
+        def is_valid(msg):
+            return msg.channel == ctx.channel and msg.author == ctx.author
+
+        address = "start"
+        counter = 0
+        wl_addresses = []
+        while counter < 100:
+            await ctx.send(embed=embeds.wl_address_prompt())
+            address = await bot.wait_for("message", check=is_valid)
+            address = address.content
+
+            if address.lower() == "done":
+                break
+            elif Web3.isAddress(address):
+                wl_addresses.append(address)
+                counter += 1
+            else:
+                await ctx.send(embed=errors.handle_invalid_wl_address())
+        if len(wl_addresses) > 0:
+            await ctx.send(embed=embeds.wl_address_ok_prompt(wl_addresses))
+            confirmation = await bot.wait_for("message", check=is_valid)
+            if confirmation.content.lower() in ["yes", "y", "confirm"]:
+                add_wl_addresses_to_db(conn, wl_addresses)
+                await ctx.send(embed=embeds.wl_address_success())
+            else:
+                await ctx.send(embed=embeds.wl_address_cancelled())
+        else:
+            await ctx.send(embed=errors.handle_empty_wl_address())
 
     @bot.command()
     @commands.dm_only()
@@ -63,7 +109,8 @@ def run_discord_bot(discord_token, conn, w3):
         wl_role = get(tlk_guild.roles, id=int(config["WHITELIST_ROLE_ID"]))
         member = tlk_guild.get_member(ctx.author.id)
         if wl_role not in member.roles:
-            return await ctx.send(embed=errors.handle_not_in_whitelist())
+            # return await ctx.send(embed=errors.handle_not_on_whitelist())
+            return await ctx.send(embed=errors.handle_nothing_to_do())
         def is_valid(msg):
             return msg.channel == ctx.channel and msg.author == ctx.author
 
@@ -96,19 +143,31 @@ def run_discord_bot(discord_token, conn, w3):
 
     @bot.command(name="check-whitelist")
     @commands.dm_only()
-    async def check_whitelist(ctx):
+    async def check_whitelist(ctx, *, address: Optional[str]):
         logger.debug("Executing check-whitelist command.")
+        def is_valid(msg):
+            return msg.channel == ctx.channel and msg.author == ctx.author
+
         tlk_guild = bot.get_guild(int(config["GUILD_ID"]))
         wl_role = get(tlk_guild.roles, id=int(config["WHITELIST_ROLE_ID"]))
         member = tlk_guild.get_member(ctx.author.id)
         if wl_role not in member.roles:
-            return await ctx.send(embed=errors.handle_not_in_whitelist())
+            await ctx.send(embed=embeds.wallet_address_prompt())
+            address = await bot.wait_for("message", check=is_valid)
+            address = address.content
+            if not Web3.isAddress(address):
+                return await ctx.send(embed=errors.handle_invalid_address())
+            if is_wl_address_in_db(conn, address):
+                return await ctx.send(embed=address_in_whitelist(address))
+            else:
+                return await ctx.send(embed=errors.handle_not_on_whitelist())
 
         address = get_wl_address_from_db(conn, ctx.author.id)
         if address:
             await ctx.send(embed=embeds.address_in_whitelist(address))
         else:
             await ctx.send(embed=embeds.address_verification_needed())
+
 
     @bot.command(name="show-whitelist")
     @commands.check(is_admin)

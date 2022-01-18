@@ -3,7 +3,7 @@ from web3 import Web3
 import json
 from eth_account import Account
 from secrets import randbits
-from tokens.tokens import tokens, get_token_abi
+# from tokens.tokens import tokens, get_token_abi
 from utils.utils import to_decimal, from_decimal
 from decimal import Decimal
 from config import config
