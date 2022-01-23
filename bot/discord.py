@@ -19,12 +19,13 @@ from decimal import Decimal
 from config import config
 
 ADMINS = [687754112866975841, 303336238495039501, 205188831815794688,
-        852094576784441365, 817156615840202775]
+        852094576784441365, 817156615840202775, 366965217621442561]
 
 # LOSER WALDO 303336238495039501
 # LOSER ROOT 205188831815794688
 # LOSER KING 852094576784441365
 # LOSER KRYPTONET 817156615840202775
+# GallantJohny 366965217621442561 - !!! For Testing ONLY, REMOVE !!!
 
 @logger.catch
 def run_discord_bot(discord_token, conn, w3):
@@ -49,11 +50,29 @@ def run_discord_bot(discord_token, conn, w3):
     def is_admin(ctx):
         return ctx.message.author.id in ADMINS
 
+    @bot.command(name="assign-role-to-early-users")
+    @commands.check(is_admin)
+    async def assign_role_to_early_users(ctx, number_of_users: int, channel: discord.TextChannel, role: discord.Role):
+        messages = await channel.history(limit=2000, oldest_first=True).flatten()
+        logger.info(str(role))
+        users_for_wl = []
+
+        for message in messages:
+            if len(users_for_wl) < int(number_of_users):
+                member = ctx.guild.get_member(message.author.id)
+                if (member not in users_for_wl) and member is not None:
+                    users_for_wl.append(member)
+
+        for user in users_for_wl:
+            if role not in user.roles:
+                await user.add_roles(role)
+            else:
+                logger.info("{} is already assigned to {}", role, user.name)
 
     @bot.command(name="help-admin")
     @commands.check(is_admin)
     async def help_admin(ctx):
-        logger.debug("{} is executing !help-admin command.", ctx.author)
+        logger.info("{} is executing !help-admin command.", ctx.author)
         await ctx.send(embed=embeds.help_admin())
 
     ###
