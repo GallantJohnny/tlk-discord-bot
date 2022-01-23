@@ -62,7 +62,6 @@ def run_discord_bot(discord_token, conn, w3):
     async def assign_role_to_early_users(ctx, number_of_users: int, channel: discord.TextChannel, role: discord.Role):
         logger.debug("{} is executing !assign-role-to-early-users command.", ctx.author)
         messages = await channel.history(limit=10000, oldest_first=True).flatten()
-        logger.info(str(role))
         users_for_wl = []
 
         for message in messages:
@@ -74,8 +73,10 @@ def run_discord_bot(discord_token, conn, w3):
         for user in users_for_wl:
             if role not in user.roles:
                 await user.add_roles(role)
+                logger.debug("{} is assigned to {}", role, user.name)
             else:
                 logger.debug("{} is already assigned to {}", role, user.name)
+        logger.debug("Finished assigning {}", role)
 
     @bot.command(name="help-admin")
     @commands.check(is_admin)
