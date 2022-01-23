@@ -67,16 +67,16 @@ def run_discord_bot(discord_token, conn, w3):
         for message in messages:
             if len(users_for_wl) < int(number_of_users):
                 member = ctx.guild.get_member(message.author.id)
-                if (member not in users_for_wl) and member is not None:
+                if (member not in users_for_wl) and member is not None and not member.bot:
                     users_for_wl.append(member)
 
         for user in users_for_wl:
             if role not in user.roles:
                 await user.add_roles(role)
-                logger.debug("{} is assigned to {}", role, user.name)
+                logger.debug("@{} is assigned to {}", role, user.name)
             else:
-                logger.debug("{} is already assigned to {}", role, user.name)
-        logger.debug("Finished assigning {}", role)
+                logger.debug("@{} is already assigned to {}", role, user.name)
+        logger.debug("Finished assigning @{} role to members", role)
 
     @bot.command(name="help-admin")
     @commands.check(is_admin)
