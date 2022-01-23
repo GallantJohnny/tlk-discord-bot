@@ -24,6 +24,19 @@ import discord
     # return embed
 
 @logger.catch
+def help_assign_role_to_early_users():
+    embed = discord.Embed(title="Help assign role to early users", color=0x117de1)
+    embed.description = "Assign a specified role to the first users ever typed to a specific channel"
+    embed.add_field(name="Commands",
+                    value='''```!help-assign-role-to-early-users  \
+                    number_of_users => First number of users (e.g. 200) \
+                    #channel => Will look for first users in this channel \
+                    @role => Role to assign to users```''',
+                    inline=False)
+
+    return embed
+
+@logger.catch
 def help_admin():
     embed = discord.Embed(title="Help Admin", color=0x117de1)
     embed.description = "Help for admin-only commands."
